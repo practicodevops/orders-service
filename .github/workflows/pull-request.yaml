@@ -1,0 +1,19 @@
+name: Pull request pipeline
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+    branches:
+      - develop
+      - staging
+      - main
+
+concurrency:
+  group: environment-${{github.ref}}
+  cancel-in-progress: true
+
+jobs:
+  build-and-analyze:
+    uses: ./.github/workflows/build-and-analyze.yaml
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
