@@ -9,27 +9,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps: 
-    - uses: actions/checkout@v3
-
-    - name: Install Node
+    - name: Checkout
       uses: actions/checkout@v3
-      with:
-        node-version: "17.x"
+    
+    - name: Start containers
+      run: docker-compose up -d
 
-    - name: Install newman
-      run: |
-        npm install -g newman
-        npm install -g newman-reporter-htmlextra
+    - name: Wait 15 seconds
+      run: sleep 15s
+      shell: bash
 
-    - name: Make Directory for results
-      run: mkdir result
-
-    - name: Run POSTMAN collection
-      run: |
-        newman run "orders-service.postman_collection.json" -r htmlextra --reporter-htmlextra-export result/report.html
+    - name: Display Results
+      run: docker logs postman-tests-container
 
     - name: Output the run Details
       uses: actions/upload-artifact@v3
       with:
         name: Reports
-        path: result
+        path: postman/reports/
+
+    - name: Clean Up Containers
+      if: ${{ always() }}
+      run: docker-compose down
