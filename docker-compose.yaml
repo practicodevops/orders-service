@@ -30,7 +30,6 @@ services:
     healthcheck:
       test: "wget --post-data='[\"123\",\"321\", \"111\"]' --header 'content-type: application/json' http://localhost:8080/orders"
       interval: 5s
-      retries: 2
   
   postman:
     container_name: postman-tests-container
