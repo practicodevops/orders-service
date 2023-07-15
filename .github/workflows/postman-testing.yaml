@@ -15,8 +15,8 @@ jobs:
     - name: Start containers
       run: docker-compose up -d
 
-    - name: Wait 15 seconds
-      run: sleep 15s
+    - name: Wait 20 seconds
+      run: sleep 20s
       shell: bash
 
     - name: Display Results

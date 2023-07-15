@@ -27,9 +27,6 @@ services:
       - payments-service-api
       - shipping-service-api
       - products-service-api
-    healthcheck:
-      test: "wget --post-data='[\"123\",\"321\", \"111\"]' --header 'content-type: application/json' http://localhost:8080/orders"
-      interval: 10s
   
   postman:
     container_name: postman-tests-container
@@ -37,12 +34,7 @@ services:
       context: ./postman
       dockerfile: Dockerfile
     image: postman-tests
-    command:
-      run orders-service.postman_collection.json -k
-      -r cli,htmlextra
-      --reporter-htmlextra-export="reports/orders-service-api-tests.html"
     volumes:
       - ./postman:/etc/newman
     depends_on: 
-       orders-service-api:
-        condition: service_healthy
+      - orders-service-api
