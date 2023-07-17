@@ -1,0 +1,40 @@
+services:
+  payments-service-api:
+    container_name: payments-api-container
+    image: proyectodevopsem/payments-service:latest
+
+  shipping-service-api:
+    container_name: shipping-api-container
+    image: proyectodevopsem/shipping-service:latest
+
+  products-service-api:
+    container_name: products-api-container
+    image: proyectodevopsem/products-service:latest
+    
+  orders-service-api:
+    container_name: orders-api-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: orders-service
+    environment:
+      - PAYMENT_SERVICE=http://payments-api-container:8080
+      - SHIPPING_SERVICE=http://shipping-api-container:8080
+      - PRODUCTS_SERVICE=http://products-api-container:8080
+    ports:
+      - 8080:8080
+    depends_on: 
+      - payments-service-api
+      - shipping-service-api
+      - products-service-api
+  
+  postman:
+    container_name: postman-tests-container
+    build: 
+      context: ./postman
+      dockerfile: Dockerfile
+    image: postman-tests
+    volumes:
+      - ./postman:/etc/newman
+    depends_on: 
+      - orders-service-api

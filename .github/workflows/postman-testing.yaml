@@ -1,0 +1,33 @@
+name: Postman testing
+
+on:
+  workflow_call:
+
+jobs:
+  postman-testing:
+    name: Postman testing
+    runs-on: ubuntu-latest
+
+    steps: 
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    - name: Start containers
+      run: docker-compose up -d
+
+    - name: Wait 20 seconds
+      run: sleep 20s
+      shell: bash
+
+    - name: Display Results
+      run: docker logs postman-tests-container
+
+    - name: Output the run Details
+      uses: actions/upload-artifact@v3
+      with:
+        name: Reports
+        path: postman/reports/
+
+    - name: Clean Up Containers
+      if: ${{ always() }}
+      run: docker-compose down

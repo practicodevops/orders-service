@@ -1,0 +1,64 @@
+name: Deploy to EKS Cluster
+
+on:
+  workflow_call:
+    inputs:
+      ENVIRONMENT:
+        required: true
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_DEFAULT_REGION:
+        required: true
+      AWS_SESSION_TOKEN:
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+    - name: Set Up Kubectl
+      run: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+        kubectl version --client
+
+    - name: Set Up Helm
+      run: |
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+
+    - name: Set Up nginx-ingress helm repo
+      run: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    
+    - name: Checkout
+      uses: actions/checkout@v3.5.3
+      with:
+        repository: practicodevops/practico-devops-infrastructure
+        ref: refs/heads/main
+        path: infra
+
+    - name: Configure Kubernetes context
+      run: |
+        aws eks update-kubeconfig --name eks-cluster-${{ inputs.ENVIRONMENT }} --region us-east-1
+
+    - name: Deploy to EKS
+      run: |
+        cd infra/kubernetes
+        kubectl apply -f ingress.yaml
+        helm upgrade -i ingress-nginx ingress-nginx/ingress-nginx \
+        --namespace kube-system \
+        --set controller.service.type=LoadBalancer
+        helm upgrade -i orders ./helm-charts/orders-service --set=image.tag=${{ github.sha }}
